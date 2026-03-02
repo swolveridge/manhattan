@@ -10,24 +10,28 @@ Throughout this plan, "ask the coding agent" means using whatever agent you're c
 
 ---
 
-## Stage 0: Meta-Specs
+## Stage 0: Foundation Specs
 
 **What we're doing:** Establishing the conventions everything else follows. No code.
 
 **Artifacts to write (by hand, in your editor):**
 
-### `specs/meta/spec-format.md`
-The format convention. Covers:
-- Specs are markdown files under `specs/`
-- Directory organization by kind (`features/`, `behavioral/`, `interface/`, `constraints/`)
-- The `Specifies: path/to/file.md#heading` convention for DAG edges
+### `specs/spec-format.md`
+The one truly meta document — the format convention the system itself needs in order to read anything else. Covers:
+- Specs are markdown files under `specs/`, flat directory, no subdirectories
+- Each spec has a `Kind:` field in front matter (`feature`, `behavioral`, `interface`, `constraint`, `context`)
+- The `Specifies: file.md#heading` convention for DAG edges
 - Cross-references as standard markdown links
 - Declarative voice ("the system does X" not "do X")
 - What belongs in a spec vs. what's code territory
 
+This file is excluded from orphan detection (by name, not by kind) and excluded from reconciliation — add it to `.specignore`. It's the axiom the system builds on; everything else is a theorem within it.
+
 **Reasoning:** Everything downstream parses or writes specs. If the format is ambiguous, every tool will handle edge cases differently. Get this right first. But keep it short — one to two pages. You'll revise it as you learn what works.
 
-### `specs/meta/prompt-standards.md`
+### `specs/prompt-standards.md`
+`Kind: constraint`
+
 How prompts used by the system should be structured. Covers:
 - Role assignment at the start of each prompt
 - Explicit constraints (what the LLM should not do)
@@ -35,23 +39,29 @@ How prompts used by the system should be structured. Covers:
 - Context delimiters between instructions and provided content
 - Single responsibility per prompt
 
-**Reasoning:** Every component of the system sends prompts to LLMs. Consistent prompt structure makes them easier to debug, test, and improve. Also, this document becomes context for the coding agent when it's building prompt templates later — "follow these standards."
+**Reasoning:** Every component of the system sends prompts to LLMs. Consistent prompt structure makes them easier to debug, test, and improve. This is a constraint spec — it constrains how prompts are written across the system, the same way "all API responses must include a request ID" constrains a web service. Also, this document becomes context for the coding agent when it's building prompt templates later — "follow these standards."
 
-### `specs/meta/architecture.md`
+### `specs/architecture.md`
+`Kind: feature`
+
 High-level system architecture. Covers:
 - The two-phase model (spec reconciliation → code reconciliation)
 - Components and their relationships (parser, linter, prompt generator, test deriver, reconciler, traceability)
 - What's in `.specignore` and why
 - The principle of specs as source of truth, code as real artifact
 
+This is the root of the DAG — a root feature spec, so it needs no `Specifies:` link itself.
+
 **Reasoning:** This is the map. When you're asking a coding agent to build component X, it needs to understand where X fits in the whole system. This doc provides that context without requiring the agent to read the entire spec corpus.
 
-### `specs/meta/bootstrapping.md`
-A constraint/context spec capturing the build plan (essentially a refined version of this document). Why we're building in this order, what we tried and rejected (self-bootstrapping), what the adoption model is.
+### `specs/bootstrapping.md`
+`Kind: context`
 
-**Reasoning:** ADR-style. Prevents re-litigating decisions. Also useful context for the coding agent — "we're building the linter, here's why it comes before the reconciler."
+A context spec capturing the build plan (essentially a refined version of this document). Why we're building in this order, what we tried and rejected (self-bootstrapping), what the adoption model is.
 
-**How to validate Stage 0:** Read the meta-specs yourself. Do they make sense? Could a new team member read them and understand the project? Could a coding agent read them and understand what it's building? Show them to Claude and ask "what's ambiguous or missing here?" Not as a formal tool — just in conversation.
+**Reasoning:** ADR-style. Prevents re-litigating decisions. Also useful context for the coding agent — "we're building the linter, here's why it comes before the reconciler." Constraint and context specs float freely — they don't need `Specifies:` links and are exempt from orphan detection.
+
+**How to validate Stage 0:** Read the specs yourself. Do they make sense? Could a new team member read them and understand the project? Could a coding agent read them and understand what it's building? Show them to Claude and ask "what's ambiguous or missing here?" Not as a formal tool — just in conversation.
 
 ---
 
@@ -61,34 +71,40 @@ A constraint/context spec capturing the build plan (essentially a refined versio
 
 **Specs to write:**
 
-### `specs/features/spec-parsing.md`
+### `specs/spec-parsing.md`
+`Kind: feature`
+
 High-level feature spec:
-- The system reads markdown spec files from a directory tree
+- The system reads markdown spec files from a flat `specs/` directory
 - It extracts `Specifies:` declarations and builds a directed acyclic graph
 - It resolves cross-references between specs
 - It detects and reports structural problems (cycles, broken links, missing targets)
 
-### `specs/behavioral/specifies-link-parsing.md`
-`Specifies: features/spec-parsing.md#link-extraction`
+### `specs/specifies-link-parsing.md`
+`Kind: behavioral`
+`Specifies: spec-parsing.md#link-extraction`
 
 Detailed behavior:
 - `Specifies:` appears on the line immediately after a heading
 - Multiple `Specifies:` links are allowed (one per line)
-- The target format is `path/to/file.md#heading-slug`
+- The target format is `file.md#heading-slug`
 - Heading slugs follow GitHub-flavored markdown conventions (lowercase, hyphens for spaces)
 - How to handle malformed links (report error, continue parsing)
 
-### `specs/behavioral/dag-construction.md`
-`Specifies: features/spec-parsing.md#dag-construction`
+### `specs/dag-construction.md`
+`Kind: behavioral`
+`Specifies: spec-parsing.md#dag-construction`
 
 Detailed behavior:
 - Nodes are heading-level sections within spec files
 - Edges point from the specifying node to the specified node (lower to higher)
 - Cycle detection with clear error reporting (which nodes form the cycle)
-- Orphan detection (specs that neither specify anything nor are specified by anything)
+- Orphan detection rule: feature, behavioral, and interface specs must `Specifies:` something (except root feature specs like `architecture.md`); constraint and context specs are exempt and float freely
+- `spec-format.md` is exempt from orphan detection by name
 
-### `specs/interface/parser-api.md`
-`Specifies: features/spec-parsing.md`
+### `specs/parser-api.md`
+`Kind: interface`
+`Specifies: spec-parsing.md`
 
 The parser's programmatic interface:
 - Input: a directory path
@@ -100,7 +116,7 @@ The parser's programmatic interface:
 
 ```
 I'm building a spec management system. Here's the architecture: 
-[paste specs/meta/architecture.md]
+[paste specs/architecture.md]
 
 I'm starting with the spec parser. Here are the specs for it:
 [paste all four specs above]
@@ -116,7 +132,7 @@ graph data structure, detect cycles with a standard algorithm.
 
 **Reasoning for building this first:** The linter needs to traverse the spec DAG. The reconciler needs to find related specs. The traceability system needs to know which specs exist. Everything starts with parsing specs. And it's simple — well-understood algorithms (markdown parsing, graph construction, cycle detection), easy to test, low risk.
 
-**How to validate:** Write a few test spec files with known relationships, including deliberate errors (cycles, broken links). Run the parser. Does the DAG match what you expect? Do the errors get caught? Also: **point the parser at your actual `specs/` directory.** It should parse the meta-specs and the parser's own specs and produce a valid (if small) DAG.
+**How to validate:** Write a few test spec files with known relationships, including deliberate errors (cycles, broken links). Run the parser. Does the DAG match what you expect? Do the errors get caught? Also: **point the parser at your actual `specs/` directory.** It should parse the foundation specs and the parser's own specs and produce a valid (if small) DAG.
 
 ---
 
@@ -126,7 +142,10 @@ graph data structure, detect cycles with a standard algorithm.
 
 **Specs to write:**
 
-### `specs/features/spec-linting.md`
+### `specs/spec-linting.md`
+`Kind: feature`
+`Specifies: architecture.md#spec-linting`
+
 High-level feature spec:
 - The system analyzes a spec corpus for problems
 - Categories of problems: structural, semantic, completeness
@@ -134,18 +153,20 @@ High-level feature spec:
 - Semantic checks use LLM analysis
 - Output is a report with issues, severity, locations, and explanations
 
-### `specs/behavioral/structural-checks.md`
-`Specifies: features/spec-linting.md#structural-checks`
+### `specs/structural-checks.md`
+`Kind: behavioral`
+`Specifies: spec-linting.md#structural-checks`
 
 Deterministic checks that don't need an LLM:
 - Broken `Specifies:` links (target file or heading doesn't exist)
 - Cycles in the DAG
-- Orphan specs (not connected to anything)
+- Orphan specs (feature/behavioral/interface specs with no `Specifies:` link and no incoming links, per the orphan detection rule)
 - Specs with `Specifies:` links to non-spec files
 - Missing required sections (every spec should have at least a description)
 
-### `specs/behavioral/contradiction-detection.md`
-`Specifies: features/spec-linting.md#contradiction-detection`
+### `specs/contradiction-detection.md`
+`Kind: behavioral`
+`Specifies: spec-linting.md#contradiction-detection`
 
 LLM-powered analysis:
 - Compare specs that specify the same parent (sibling specs)
@@ -154,8 +175,9 @@ LLM-powered analysis:
 - Report with quotes from both specs showing the contradiction
 - Confidence rating (high/medium/low)
 
-### `specs/behavioral/gap-detection.md`
-`Specifies: features/spec-linting.md#gap-detection`
+### `specs/gap-detection.md`
+`Kind: behavioral`
+`Specifies: spec-linting.md#gap-detection`
 
 LLM-powered analysis:
 - Identify concepts referenced but never defined
@@ -163,16 +185,18 @@ LLM-powered analysis:
 - Identify missing error handling specs (what happens when X fails?)
 - Flag specs that reference external systems without interface specs
 
-### `specs/behavioral/ambiguity-detection.md`
-`Specifies: features/spec-linting.md#ambiguity-detection`
+### `specs/ambiguity-detection.md`
+`Kind: behavioral`
+`Specifies: spec-linting.md#ambiguity-detection`
 
 LLM-powered analysis:
 - Identify specs with multiple plausible interpretations
 - Identify vague quantifiers ("quickly," "efficiently," "appropriately")
 - Identify undefined terms that could mean different things in different contexts
 
-### `specs/interface/linter-cli.md`
-`Specifies: features/spec-linting.md`
+### `specs/linter-cli.md`
+`Kind: interface`
+`Specifies: spec-linting.md`
 
 CLI interface:
 - `spec-lint check [directory]` — run all checks, report issues
@@ -185,7 +209,7 @@ CLI interface:
 
 ```
 I'm building a spec management system. Here's the architecture:
-[paste specs/meta/architecture.md]
+[paste specs/architecture.md]
 
 I've already built the spec parser:
 [paste specs for parser + point to the implementation]
@@ -194,7 +218,7 @@ Now I'm building the spec linter. Here are the specs:
 [paste all linter specs]
 
 And here are the prompt standards to follow for LLM-powered checks:
-[paste specs/meta/prompt-standards.md]
+[paste specs/prompt-standards.md]
 
 Please implement this. The structural checks should use the parser 
 library directly. The semantic checks (contradiction, gap, ambiguity) 
@@ -234,15 +258,19 @@ Then, semantic validation:
 
 **Specs to write:**
 
-### `specs/features/prompt-generation.md`
+### `specs/prompt-generation.md`
+`Kind: feature`
+`Specifies: architecture.md#prompt-generation`
+
 High-level feature spec:
 - The system constructs LLM prompts from templates and context
 - Templates are parameterized with spec content, code content, and metadata
-- Prompts follow the standards in `specs/meta/prompt-standards.md`
+- Prompts follow the standards in `specs/prompt-standards.md`
 - Output is a complete prompt string ready to send to an LLM API
 
-### `specs/behavioral/template-filling.md`
-`Specifies: features/prompt-generation.md#template-filling`
+### `specs/template-filling.md`
+`Kind: behavioral`
+`Specifies: prompt-generation.md#template-filling`
 
 How templates work:
 - Templates are text files with placeholder syntax (e.g., `{{spec_content}}`, `{{code_content}}`)
@@ -250,8 +278,9 @@ How templates work:
 - Conditional sections (include this block only if code_content is provided)
 - How to handle missing variables (error, not silent empty string)
 
-### `specs/behavioral/context-assembly.md`
-`Specifies: features/prompt-generation.md#context-assembly`
+### `specs/context-assembly.md`
+`Kind: behavioral`
+`Specifies: prompt-generation.md#context-assembly`
 
 How context is gathered for a prompt:
 - Given a spec, find related specs (parent, siblings, children in the DAG)
@@ -259,8 +288,9 @@ How context is gathered for a prompt:
 - Manage total context size (truncation strategy, prioritization)
 - Delimiter conventions between sections of context
 
-### `specs/interface/prompt-generator-api.md`
-`Specifies: features/prompt-generation.md`
+### `specs/prompt-generator-api.md`
+`Kind: interface`
+`Specifies: prompt-generation.md`
 
 Programmatic interface:
 - Input: template name, primary spec, optional code content, optional additional context
@@ -272,7 +302,7 @@ Programmatic interface:
 
 ```
 I'm building a spec management system. Here's the architecture:
-[paste specs/meta/architecture.md]
+[paste specs/architecture.md]
 
 I've built the parser and linter:
 [point to their implementations and specs]
@@ -299,7 +329,10 @@ directory, filled using the new prompt generator.
 
 **Specs to write:**
 
-### `specs/features/test-derivation.md`
+### `specs/test-derivation.md`
+`Kind: feature`
+`Specifies: architecture.md#test-derivation`
+
 High-level feature spec:
 - A separate agent reads specs and produces test cases
 - Tests verify the behavioral claims made by specs
@@ -307,8 +340,9 @@ High-level feature spec:
 - Tests are executable (not just descriptions)
 - Tests cover happy paths, edge cases, and error cases described in specs
 
-### `specs/behavioral/test-independence.md`
-`Specifies: features/test-derivation.md#independence`
+### `specs/test-independence.md`
+`Kind: behavioral`
+`Specifies: test-derivation.md#independence`
 
 The independence guarantee:
 - The test derivation prompt includes spec content but never implementation code
@@ -316,8 +350,9 @@ The independence guarantee:
 - The test deriver does NOT see behavioral implementation details
 - This separation is enforced by what context the prompt generator assembles, not by honor system
 
-### `specs/behavioral/test-coverage-mapping.md`
-`Specifies: features/test-derivation.md#coverage`
+### `specs/test-coverage-mapping.md`
+`Kind: behavioral`
+`Specifies: test-derivation.md#coverage`
 
 How specs map to tests:
 - Each behavioral spec section should produce at least one test
@@ -325,16 +360,18 @@ How specs map to tests:
 - Tests are tagged with which spec section they verify (traceability)
 - The deriver reports which spec sections it couldn't produce tests for (untestable specs)
 
-### `specs/behavioral/integration-test-derivation.md`
-`Specifies: features/test-derivation.md#integration-tests`
+### `specs/integration-test-derivation.md`
+`Kind: behavioral`
+`Specifies: test-derivation.md#integration-tests`
 
 How cross-cutting tests are derived:
 - Specs with multiple `Specifies:` links (cross-cutting concerns) trigger integration tests
 - Integration tests verify that the interaction between features works, not just each feature in isolation
 - The deriver is given all relevant specs for an integration point, not just one
 
-### `specs/interface/test-deriver-api.md`
-`Specifies: features/test-derivation.md`
+### `specs/test-deriver-api.md`
+`Kind: interface`
+`Specifies: test-derivation.md`
 
 Interface:
 - Input: a spec (or set of specs), interface specs for the code under test
@@ -366,7 +403,7 @@ Follow the prompt standards.
 
 This is the first really interesting validation step. You can:
 
-1. Run `spec-test derive specs/behavioral/contradiction-detection.md` — this generates tests for the linter's contradiction detection, based only on the spec
+1. Run `spec-test derive specs/contradiction-detection.md` — this generates tests for the linter's contradiction detection, based only on the spec
 2. Run those tests against the actual linter implementation
 3. Do they pass? If not, either:
    - The linter implementation doesn't match the spec (fix the implementation or the spec)
@@ -387,15 +424,19 @@ Each of these failure modes is informative. This is where you learn the most abo
 
 **Specs to write:**
 
-### `specs/features/reconciliation.md`
+### `specs/reconciliation.md`
+`Kind: feature`
+`Specifies: architecture.md#reconciliation`
+
 High-level feature spec:
 - The system reads consistent specs and produces code changes to align the codebase
 - Phase 2 is autonomous — no human in the loop
 - Output is a set of file changes (creates, updates, deletes)
 - Verification is multi-layered: independently derived tests, unspec'd residue detection, change proportionality checks
 
-### `specs/behavioral/code-generation.md`
-`Specifies: features/reconciliation.md#code-generation`
+### `specs/code-generation.md`
+`Kind: behavioral`
+`Specifies: reconciliation.md#code-generation`
 
 How code is generated/updated:
 - Given a spec and existing code (if any), produce updated code that satisfies the spec
@@ -403,8 +444,9 @@ How code is generated/updated:
 - Generated code should be idiomatic for the project's language and style
 - The reconciler sees: the target spec, related specs (from the DAG), existing code for the target, interface specs for dependencies
 
-### `specs/behavioral/change-proportionality.md`
-`Specifies: features/reconciliation.md#change-proportionality`
+### `specs/change-proportionality.md`
+`Kind: behavioral`
+`Specifies: reconciliation.md#change-proportionality`
 
 Guarding against over-generation:
 - Small spec changes should produce small code changes (usually)
@@ -412,16 +454,18 @@ Guarding against over-generation:
 - "Large" is measured in both lines changed and files touched
 - The flag doesn't block the change, but it's surfaced in the output
 
-### `specs/behavioral/unspecd-residue-detection.md`
-`Specifies: features/reconciliation.md#residue-detection`
+### `specs/unspecd-residue-detection.md`
+`Kind: behavioral`
+`Specifies: reconciliation.md#residue-detection`
 
 Finding code that shouldn't exist:
 - After reconciliation, analyze the codebase for code not traceable to any spec
 - Report unspec'd code with suggestions: is it dead code? Does it need a spec? Is it an implicit behavior?
 - This is a separate analysis pass after code generation, not part of generation itself
 
-### `specs/behavioral/multi-agent-loop.md`
-`Specifies: features/reconciliation.md#multi-agent`
+### `specs/multi-agent-loop.md`
+`Kind: behavioral`
+`Specifies: reconciliation.md#multi-agent`
 
 The inner collaboration loop:
 - At minimum: a coder agent and a reviewer agent
@@ -431,8 +475,9 @@ The inner collaboration loop:
 - Additional personas (architect, performance) are future extensions
 - Each agent gets its own prompt, assembled by the prompt generator
 
-### `specs/behavioral/reconciliation-workflow.md`
-`Specifies: features/reconciliation.md#workflow`
+### `specs/reconciliation-workflow.md`
+`Kind: behavioral`
+`Specifies: reconciliation.md#workflow`
 
 The end-to-end reconciliation flow:
 1. Identify which specs have changed (or which code is out of alignment)
@@ -445,8 +490,9 @@ The end-to-end reconciliation flow:
 8. Run unspec'd residue detection
 9. Report results: changes made, tests passed/failed, residue found, proportionality flags
 
-### `specs/interface/reconciler-cli.md`
-`Specifies: features/reconciliation.md`
+### `specs/reconciler-cli.md`
+`Kind: interface`
+`Specifies: reconciliation.md`
 
 CLI interface:
 - `spec-reconcile run` — full reconciliation: find misaligned code, fix it
@@ -535,7 +581,7 @@ This needs careful, graduated testing:
 
 2. **Test on the existing codebase:** Run `spec-reconcile check` on the system itself. It should report that existing code (built by hand with Claude) mostly satisfies the specs. Discrepancies reveal either code bugs or spec ambiguities — both valuable to find.
 
-3. **Test a real change:** Modify a spec for the linter (add a new check type, for example). Run `spec-reconcile run --spec specs/features/spec-linting.md`. Does it produce a reasonable code change? Do the independently derived tests pass?
+3. **Test a real change:** Modify a spec for the linter (add a new check type, for example). Run `spec-reconcile run --spec specs/spec-linting.md`. Does it produce a reasonable code change? Do the independently derived tests pass?
 
 4. **Test proportionality:** Make a tiny spec change. Does the reconciler make a proportionate code change, or does it rewrite everything?
 
@@ -549,7 +595,10 @@ This needs careful, graduated testing:
 
 **Specs to write:**
 
-### `specs/features/traceability.md`
+### `specs/traceability.md`
+`Kind: feature`
+`Specifies: architecture.md#traceability`
+
 High-level feature spec:
 - The system can determine which code implements which specs
 - The relationship is many-to-many
@@ -557,8 +606,9 @@ High-level feature spec:
 - Results can be cached but the cache is never trusted as authoritative
 - The cache can be rebuilt from scratch as a consistency check
 
-### `specs/behavioral/derived-traceability.md`
-`Specifies: features/traceability.md#on-demand-derivation`
+### `specs/derived-traceability.md`
+`Kind: behavioral`
+`Specifies: traceability.md#on-demand-derivation`
 
 How traceability is determined:
 - Given a spec, find code files that implement it
@@ -567,16 +617,18 @@ How traceability is determined:
 - For large codebases, use exploration (file listing, grep, targeted reads) before detailed analysis
 - Report confidence levels (high/medium/low)
 
-### `specs/behavioral/residue-integration.md`
-`Specifies: features/traceability.md#residue-detection`
+### `specs/residue-integration.md`
+`Kind: behavioral`
+`Specifies: traceability.md#residue-detection`
 
 Integration with unspec'd residue detection:
 - Code that doesn't trace to any spec is candidate residue
 - `.specignore` files and directories are excluded from residue analysis
 - Traceability for dependencies: code that implements an interface spec for an external dependency is not residue
 
-### `specs/interface/traceability-api.md`
-`Specifies: features/traceability.md`
+### `specs/traceability-api.md`
+`Kind: interface`
+`Specifies: traceability.md`
 
 Interface:
 - `spec-trace spec path/to/spec.md` — show which code implements this spec
@@ -616,7 +668,7 @@ and to find unspec'd code.
 The parser is the simplest, most stable component. Low risk.
 
 ```
-spec-reconcile check --spec specs/features/spec-parsing.md
+spec-reconcile check --spec specs/spec-parsing.md
 ```
 
 Does it report the existing parser code satisfies the specs? If there are discrepancies, understand why before proceeding.
@@ -624,7 +676,7 @@ Does it report the existing parser code satisfies the specs? If there are discre
 Then make a small spec change to the parser. Something safe — maybe add a new structural check or change an error message format.
 
 ```
-spec-reconcile run --spec specs/features/spec-parsing.md
+spec-reconcile run --spec specs/spec-parsing.md
 ```
 
 Review the diff. Run the independently derived tests. Does it look right?
@@ -660,7 +712,7 @@ Once you've done several successful self-reconciliation cycles with manual revie
 ## Summary: What Gets Built When
 
 ```
-Stage 0 │ Meta-specs           │ By hand        │ No code
+Stage 0 │ Foundation specs      │ By hand        │ No code
 Stage 1 │ Spec parser          │ Coding agent   │ Foundation
 Stage 2 │ Spec linter          │ Coding agent   │ First useful tool
 Stage 3 │ Prompt generator     │ Coding agent   │ Prompt infrastructure  
