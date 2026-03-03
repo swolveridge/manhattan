@@ -1,4 +1,4 @@
-# Spec-Driven Codebase Reconciliation: Design Exploration
+# Spec-Driven Codebase Reconciliation: Design
 
 ## The Core Idea
 
