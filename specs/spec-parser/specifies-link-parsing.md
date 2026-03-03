@@ -1,7 +1,7 @@
 ---
 Kind: behavioural
 Specifies:
-  - spec-parsing.md#link-extraction
+  - spec-parser/spec-parsing.md#link-extraction
 ---
 
 # Specifies Link Parsing

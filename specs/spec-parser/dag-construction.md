@@ -1,7 +1,7 @@
 ---
 Kind: behavioural
 Specifies:
-  - spec-parsing.md#dag-construction
+  - spec-parser/spec-parsing.md#dag-construction
 ---
 
 # DAG Construction

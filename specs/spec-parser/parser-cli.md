@@ -1,7 +1,7 @@
 ---
 Kind: interface
 Specifies:
-  - spec-parsing.md#parser-interface
+  - spec-parser/spec-parsing.md#parser-interface
 ---
 
 # Parser CLI
