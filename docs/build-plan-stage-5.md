@@ -74,6 +74,10 @@ The end-to-end reconciliation flow:
 8. Run unspec'd residue detection
 9. Report results: changes made, tests passed/failed, residue found, proportionality flags
 
+### Reconciliation Write Boundary
+
+- The reconciler must not change files or directories covered by `.specignore`.
+
 ### `specs/reconciler-cli.md`
 `Kind: interface`
 `Specifies: reconciliation.md`
