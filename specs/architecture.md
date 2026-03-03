@@ -1,5 +1,6 @@
 ---
 Kind: feature
+Root: true
 ---
 
 # System Architecture

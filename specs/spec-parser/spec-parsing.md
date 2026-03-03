@@ -17,7 +17,7 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 ## Link Extraction
 
 - Parse front matter from each spec file.
-- Extract `Kind` and `Specifies` metadata.
+- Extract `Kind`, `Specifies`, and optional `Root` metadata.
 - Interpret each `Specifies` target as a directed edge from the current spec to the referenced section.
 
 ## DAG Construction
@@ -37,6 +37,8 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 - Report malformed front matter.
 - Report invalid `Kind` values.
 - Report malformed `Specifies` entries.
+- Report invalid `Root` values and invalid `Root` placement on non-`feature` specs.
+- Report when more than one spec declares `Root: true`.
 - Continue parsing after recoverable errors and return all discovered issues in one pass.
 
 ## Parser Interface

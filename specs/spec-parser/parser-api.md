@@ -23,6 +23,7 @@ Define a reusable library interface for spec parsing and graph construction.
 
 - Return node identifiers as canonical addresses (`file-name.md` or `file-name.md#heading-slug`).
 - Return edges as source-target address pairs.
+- Return parsed front-matter root metadata for each spec.
 - Return diagnostics with severity, message, and source location.
 
 ## Diagnostics Contract

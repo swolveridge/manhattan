@@ -27,8 +27,10 @@ Construct and validate the directed acyclic graph derived from spec metadata.
 ## Orphan Detection
 
 - Flag orphan specs for `feature`, `behavioural`, and `interface` kinds when they have no valid `Specifies` targets.
+- Exempt specs marked `Root: true` from orphan detection.
 - Exempt `constraint` and `context` kinds from orphan detection.
 - Exempt `spec-format.md` from orphan detection by filename.
+- Enforce that at most one spec declares `Root: true`.
 
 ## Broken Target Detection
 

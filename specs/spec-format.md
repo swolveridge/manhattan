@@ -19,6 +19,7 @@ Each spec file must start with YAML front matter containing:
 
 - `Kind: feature | behavioural | interface | constraint | context`
 - `Specifies: [...]` (optional for `constraint` and `context`; conditionally required for other kinds by lint rules)
+- `Root: true` (optional; marks the single DAG root spec)
 
 `Kind` meanings:
 
@@ -33,7 +34,14 @@ Each spec file must start with YAML front matter containing:
 - `Specifies` is a YAML list of one or more section targets.
 - Each target must be `relative/path/to/file.md#heading-slug`, relative to `specs/`.
 - Multiple targets are allowed for cross-cutting specs.
-- If a spec has no parent (for example, a root architecture spec), `Specifies` may be omitted.
+- If a spec has no parent, `Specifies` may be omitted only when `Root: true` is set.
+
+`Root` format:
+
+- `Root` is optional and must be a boolean when present.
+- `Root: true` marks a spec as the DAG root.
+- At most one spec in the corpus may declare `Root: true`.
+- `Root: true` may only appear on `Kind: feature` specs.
 
 ## Section Addressing
 
@@ -79,3 +87,4 @@ The system invalidates a password reset token 30 minutes after issuance.
 
 - Feature, behavioural, and interface specs participate in the reconciliation DAG.
 - Constraint and context specs may float without `Specifies:` links.
+- A `feature` spec with `Root: true` is exempt from orphan detection.

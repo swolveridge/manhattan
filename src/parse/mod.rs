@@ -27,6 +27,7 @@ pub struct ParseResult {
 pub struct ParsedSpec {
     pub file_name: String,
     pub kind: Option<SpecKind>,
+    pub is_root: bool,
     pub specifies: Vec<SpecTarget>,
     pub headings: Vec<Heading>,
 }
@@ -106,6 +107,7 @@ pub enum DiagnosticCode {
     IoReadFailure,
     InvalidFrontMatter,
     InvalidKind,
+    InvalidRoot,
     InvalidSpecifies,
     InvalidSpecifiesTarget,
     NestedSpecFile,
@@ -115,6 +117,7 @@ pub enum DiagnosticCode {
     BrokenCrossReferenceFile,
     BrokenCrossReferenceHeading,
     CycleDetected,
+    MultipleRoots,
     OrphanSpec,
 }
 
@@ -139,6 +142,8 @@ pub enum ParserError {
 struct RawFrontMatter {
     #[serde(rename = "Kind")]
     kind: Option<String>,
+    #[serde(rename = "Root")]
+    root: Option<Value>,
     #[serde(rename = "Specifies")]
     specifies: Option<Value>,
 }
@@ -148,6 +153,7 @@ struct RawSpecFile {
     headings: Vec<Heading>,
     specifies: Vec<SpecTarget>,
     kind: Option<SpecKind>,
+    is_root: bool,
 }
 
 const SPEC_FILE_EXEMPTION: &str = "spec-format.md";
@@ -323,6 +329,29 @@ pub fn parse_specs_directory(
         });
     }
 
+    let root_specs = raw_specs
+        .iter()
+        .filter(|spec| spec.is_root)
+        .map(|spec| spec.file_name.clone())
+        .collect::<Vec<_>>();
+    if root_specs.len() > 1 {
+        for file_name in root_specs {
+            diagnostics.push(Diagnostic {
+                severity: DiagnosticSeverity::Error,
+                code: DiagnosticCode::MultipleRoots,
+                message: format!(
+                    "Declare Root: true in at most one spec; remove duplicate root declaration in '{}'.",
+                    file_name
+                ),
+                location: Some(SourceLocation {
+                    file_name,
+                    line: Some(1),
+                    column: Some(1),
+                }),
+            });
+        }
+    }
+
     for spec in &raw_specs {
         if spec.file_name == SPEC_FILE_EXEMPTION {
             continue;
@@ -335,6 +364,7 @@ pub fn parse_specs_directory(
             .copied()
             .unwrap_or(0)
             == 0
+            && !spec.is_root
         {
             diagnostics.push(Diagnostic {
                 severity: DiagnosticSeverity::Warning,
@@ -359,6 +389,7 @@ pub fn parse_specs_directory(
         .map(|raw| ParsedSpec {
             file_name: raw.file_name,
             kind: raw.kind,
+            is_root: raw.is_root,
             specifies: raw.specifies,
             headings: raw.headings,
         })
@@ -399,6 +430,7 @@ fn parse_single_file(
                 headings: Vec::new(),
                 specifies: Vec::new(),
                 kind: None,
+                is_root: false,
             };
         }
     };
@@ -408,9 +440,11 @@ fn parse_single_file(
     validate_cross_references(&file_name, &body, &headings, known_files, diagnostics);
 
     let mut kind = None;
+    let mut is_root = false;
     let mut specifies = Vec::new();
     if let Some(raw_fm) = &front_matter {
         kind = parse_kind(&file_name, raw_fm.kind.as_deref(), diagnostics);
+        is_root = parse_root(&file_name, raw_fm.root.as_ref(), kind, diagnostics);
         specifies = parse_specifies(&file_name, raw_fm.specifies.as_ref(), fm_lines, diagnostics);
     }
 
@@ -419,6 +453,7 @@ fn parse_single_file(
         headings,
         specifies,
         kind,
+        is_root,
     }
 }
 
@@ -485,6 +520,7 @@ fn parse_front_matter(
             });
             RawFrontMatter {
                 kind: None,
+                root: None,
                 specifies: None,
             }
         }
@@ -540,6 +576,47 @@ fn parse_kind(
             None
         }
     }
+}
+
+fn parse_root(
+    file_name: &str,
+    raw_root: Option<&Value>,
+    kind: Option<SpecKind>,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> bool {
+    let Some(raw_root) = raw_root else {
+        return false;
+    };
+
+    let Some(is_root) = raw_root.as_bool() else {
+        diagnostics.push(Diagnostic {
+            severity: DiagnosticSeverity::Error,
+            code: DiagnosticCode::InvalidRoot,
+            message: format!("Set Root in '{}' as a boolean value.", file_name),
+            location: Some(SourceLocation {
+                file_name: file_name.to_string(),
+                line: Some(1),
+                column: Some(1),
+            }),
+        });
+        return false;
+    };
+
+    if is_root && !matches!(kind, Some(SpecKind::Feature)) {
+        diagnostics.push(Diagnostic {
+            severity: DiagnosticSeverity::Error,
+            code: DiagnosticCode::InvalidRoot,
+            message: format!("Use Root: true only on Kind: feature specs in '{}'.", file_name),
+            location: Some(SourceLocation {
+                file_name: file_name.to_string(),
+                line: Some(1),
+                column: Some(1),
+            }),
+        });
+        return false;
+    }
+
+    is_root
 }
 
 fn parse_specifies(
@@ -971,8 +1048,9 @@ mod tests {
             result
                 .specs
                 .iter()
-                .any(|s| s.file_name == "spec-parsing.md")
+                .any(|s| s.file_name == "spec-parser/spec-parsing.md")
         );
+        assert!(result.specs.iter().any(|s| s.file_name == "architecture.md" && s.is_root));
     }
 
     #[test]
@@ -1071,6 +1149,71 @@ mod tests {
                 .diagnostics
                 .iter()
                 .any(|d| d.code == DiagnosticCode::OrphanSpec)
+        );
+    }
+
+    #[test]
+    fn root_feature_is_not_orphan() {
+        let temp = tempdir().unwrap();
+        let specs = temp.path().join("specs");
+        fs::create_dir(&specs).unwrap();
+        fs::write(
+            specs.join("architecture.md"),
+            "---\nKind: feature\nRoot: true\n---\n\n# Architecture\n",
+        )
+        .unwrap();
+
+        let result = parse_specs_directory(&specs, ParseOptions::default()).unwrap();
+        assert!(
+            !result
+                .diagnostics
+                .iter()
+                .any(|d| d.code == DiagnosticCode::OrphanSpec)
+        );
+    }
+
+    #[test]
+    fn reject_multiple_roots() {
+        let temp = tempdir().unwrap();
+        let specs = temp.path().join("specs");
+        fs::create_dir(&specs).unwrap();
+        fs::write(
+            specs.join("a.md"),
+            "---\nKind: feature\nRoot: true\n---\n\n# A\n",
+        )
+        .unwrap();
+        fs::write(
+            specs.join("b.md"),
+            "---\nKind: feature\nRoot: true\n---\n\n# B\n",
+        )
+        .unwrap();
+
+        let result = parse_specs_directory(&specs, ParseOptions::default()).unwrap();
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|d| d.code == DiagnosticCode::MultipleRoots)
+        );
+    }
+
+    #[test]
+    fn reject_root_on_non_feature() {
+        let temp = tempdir().unwrap();
+        let specs = temp.path().join("specs");
+        fs::create_dir(&specs).unwrap();
+        fs::write(
+            specs.join("context.md"),
+            "---\nKind: context\nRoot: true\n---\n\n# Context\n",
+        )
+        .unwrap();
+
+        let result = parse_specs_directory(&specs, ParseOptions::default()).unwrap();
+        assert!(
+            result
+                .diagnostics
+                .iter()
+                .any(|d| d.code == DiagnosticCode::InvalidRoot)
         );
     }
 
