@@ -6,6 +6,13 @@ Kind: feature
 
 The system keeps code aligned with declarative specs through a two-phase reconciliation model.
 
+## Implementation Language
+
+- Implement all first-party tools and libraries in Rust.
+- Use Rust as the default language for parser, linter, prompt generator, test deriver, reconciler, and traceability components.
+- Introduce non-Rust implementation languages only when an explicit constraint spec permits an exception.
+- Apply Rust coding and tooling conventions defined in `rust-standards.md`.
+
 ## Two-Phase Reconciliation Model
 
 ### Phase 1: Spec Reconciliation
