@@ -18,7 +18,7 @@ Throughout this plan, "ask the coding agent" means using whatever agent you're c
 
 ### `specs/spec-format.md`
 The one truly meta document — the format convention the system itself needs in order to read anything else. Covers:
-- Specs are markdown files under `specs/`, flat directory, no subdirectories
+- Specs are markdown files under `specs/`; subdirectories are allowed for organisation only
 - Each spec has a `Kind:` field in front matter (`feature`, `behavioral`, `interface`, `constraint`, `context`)
 - The `Specifies: file.md#heading` convention for DAG edges
 - Cross-references as standard markdown links
@@ -75,7 +75,7 @@ A context spec capturing the build plan (essentially a refined version of this d
 `Kind: feature`
 
 High-level feature spec:
-- The system reads markdown spec files from a flat `specs/` directory
+- The system recursively reads markdown spec files under `specs/`
 - It extracts `Specifies:` declarations and builds a directed acyclic graph
 - It resolves cross-references between specs
 - It detects and reports structural problems (cycles, broken links, missing targets)

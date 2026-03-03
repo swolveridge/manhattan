@@ -10,9 +10,9 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 
 ## File Discovery
 
-- Read all `.md` files in the `specs/` directory.
+- Recursively read all `.md` files under the `specs/` directory.
 - Ignore non-markdown files.
-- Enforce the flat-directory rule from `spec-format.md`; report any nested file as a structural issue and continue.
+- Treat subdirectory structure as organisational only; parsing and graph semantics must not depend on directory depth.
 
 ## Link Extraction
 

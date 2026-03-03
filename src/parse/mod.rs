@@ -165,7 +165,7 @@ pub fn parse_specs_directory(
     }
 
     let mut diagnostics = Vec::new();
-    let mut top_level_markdown_paths = Vec::new();
+    let mut markdown_paths = Vec::new();
 
     for entry in WalkDir::new(specs_dir).min_depth(1) {
         let entry = match entry {
@@ -194,34 +194,17 @@ pub fn parse_specs_directory(
             continue;
         }
 
-        if entry.depth() > 1 {
-            diagnostics.push(Diagnostic {
-                severity: DiagnosticSeverity::Error,
-                code: DiagnosticCode::NestedSpecFile,
-                message: format!(
-                    "Reject nested spec file '{}' because specs/ must stay flat.",
-                    path_to_display_name(specs_dir, entry.path())
-                ),
-                location: Some(SourceLocation {
-                    file_name: path_to_display_name(specs_dir, entry.path()),
-                    line: None,
-                    column: None,
-                }),
-            });
-            continue;
-        }
-
-        top_level_markdown_paths.push(entry.path().to_path_buf());
+        markdown_paths.push(entry.path().to_path_buf());
     }
 
-    top_level_markdown_paths.sort();
-    let discovered_file_names: BTreeSet<String> = top_level_markdown_paths
+    markdown_paths.sort();
+    let discovered_file_names: BTreeSet<String> = markdown_paths
         .iter()
         .map(|p| path_to_display_name(specs_dir, p))
         .collect();
 
     let mut raw_specs = Vec::new();
-    for path in &top_level_markdown_paths {
+    for path in &markdown_paths {
         raw_specs.push(parse_single_file(
             specs_dir,
             path,
@@ -586,7 +569,7 @@ fn parse_specifies(
         return Vec::new();
     };
 
-    let target_regex = Regex::new(r"^([A-Za-z0-9._-]+\.md)#(.+)$").expect("regex must compile");
+    let target_regex = Regex::new(r"^([^#]+\.md)#(.+)$").expect("regex must compile");
     let mut targets = Vec::new();
     for entry in entries {
         let Some(raw) = entry.as_str() else {
@@ -611,7 +594,7 @@ fn parse_specifies(
                 severity: DiagnosticSeverity::Error,
                 code: DiagnosticCode::InvalidSpecifiesTarget,
                 message: format!(
-                    "Use Specifies target format file.md#heading-slug in '{}': '{raw}'.",
+                    "Use Specifies target format relative/path/to/file.md#heading-slug in '{}': '{raw}'.",
                     file_name
                 ),
                 location: Some(SourceLocation {
@@ -623,7 +606,23 @@ fn parse_specifies(
             continue;
         };
 
-        let target_file = captures[1].to_string();
+        let target_file = captures[1].trim().replace('\\', "/");
+        if !is_valid_relative_spec_path(&target_file) {
+            diagnostics.push(Diagnostic {
+                severity: DiagnosticSeverity::Error,
+                code: DiagnosticCode::InvalidSpecifiesTarget,
+                message: format!(
+                    "Use relative spec paths under specs/ in Specifies for '{}': '{raw}'.",
+                    file_name
+                ),
+                location: Some(SourceLocation {
+                    file_name: file_name.to_string(),
+                    line: Some(1),
+                    column: Some(1),
+                }),
+            });
+            continue;
+        }
         let target_heading_raw = captures[2].trim();
         if target_heading_raw.is_empty() {
             diagnostics.push(Diagnostic {
@@ -707,7 +706,7 @@ fn validate_cross_references(
         .iter()
         .map(|h| h.slug.clone())
         .collect::<HashSet<_>>();
-    let md_target = Regex::new(r"^([A-Za-z0-9._-]+\.md)(?:#(.+))?$").expect("regex must compile");
+    let md_target = Regex::new(r"^([^#]+\.md)(?:#(.+))?$").expect("regex must compile");
 
     let parser = Parser::new_ext(body, Options::all());
     for event in parser {
@@ -748,7 +747,7 @@ fn validate_cross_references(
                 severity: DiagnosticSeverity::Warning,
                 code: DiagnosticCode::InvalidCrossReference,
                 message: format!(
-                    "Use local spec link format file.md or file.md#heading-slug in '{}': '{}'.",
+                    "Use local spec link format relative/path/to/file.md or relative/path/to/file.md#heading-slug in '{}': '{}'.",
                     file_name, destination
                 ),
                 location: Some(SourceLocation {
@@ -760,7 +759,23 @@ fn validate_cross_references(
             continue;
         };
 
-        let target_file = captures[1].to_string();
+        let target_file = captures[1].trim().replace('\\', "/");
+        if !is_valid_relative_spec_path(&target_file) {
+            diagnostics.push(Diagnostic {
+                severity: DiagnosticSeverity::Warning,
+                code: DiagnosticCode::InvalidCrossReference,
+                message: format!(
+                    "Use relative spec paths under specs/ for cross-reference in '{}': '{}'.",
+                    file_name, destination
+                ),
+                location: Some(SourceLocation {
+                    file_name: file_name.to_string(),
+                    line: None,
+                    column: None,
+                }),
+            });
+            continue;
+        }
         if !known_files.contains(&target_file) {
             diagnostics.push(Diagnostic {
                 severity: DiagnosticSeverity::Warning,
@@ -926,6 +941,22 @@ fn normalise_slug(input: &str) -> String {
     }
 }
 
+fn is_valid_relative_spec_path(path: &str) -> bool {
+    if path.is_empty() || path.starts_with('/') {
+        return false;
+    }
+
+    let mut has_segment = false;
+    for segment in path.split('/') {
+        if segment.is_empty() || segment == "." || segment == ".." {
+            return false;
+        }
+        has_segment = true;
+    }
+
+    has_segment && path.to_ascii_lowercase().ends_with(".md")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -945,7 +976,7 @@ mod tests {
     }
 
     #[test]
-    fn detect_nested_spec_file() {
+    fn allow_nested_spec_file() {
         let temp = tempdir().unwrap();
         let specs = temp.path().join("specs");
         fs::create_dir(&specs).unwrap();
@@ -960,33 +991,35 @@ mod tests {
         let result = parse_specs_directory(&specs, ParseOptions::default()).unwrap();
         assert!(
             result
-                .diagnostics
+                .specs
                 .iter()
-                .any(|d| d.code == DiagnosticCode::NestedSpecFile)
+                .any(|s| s.file_name == "nested/child.md")
         );
     }
 
     #[test]
-    fn parse_specifies_edges_and_broken_heading() {
+    fn parse_specifies_edges_and_broken_heading_with_nested_paths() {
         let temp = tempdir().unwrap();
         let specs = temp.path().join("specs");
         fs::create_dir(&specs).unwrap();
+        fs::create_dir(specs.join("core")).unwrap();
+        fs::create_dir(specs.join("features")).unwrap();
         fs::write(
-            specs.join("architecture.md"),
+            specs.join("core").join("architecture.md"),
             "---\nKind: feature\n---\n\n# Architecture\n\n## Parser\n",
         )
         .unwrap();
         fs::write(
-            specs.join("child.md"),
-            "---\nKind: behavioural\nSpecifies:\n  - architecture.md#parser\n  - architecture.md#does-not-exist\n---\n\n# Child\n",
+            specs.join("features").join("child.md"),
+            "---\nKind: behavioural\nSpecifies:\n  - core/architecture.md#parser\n  - core/architecture.md#does-not-exist\n---\n\n# Child\n",
         )
         .unwrap();
 
         let result = parse_specs_directory(&specs, ParseOptions::default()).unwrap();
         assert!(result.graph.edges.iter().any(|edge| {
             edge.kind == GraphEdgeKind::Specifies
-                && edge.source == "child.md"
-                && edge.target == "architecture.md#parser"
+                && edge.source == "features/child.md"
+                && edge.target == "core/architecture.md#parser"
         }));
         assert!(
             result

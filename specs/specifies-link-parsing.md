@@ -16,8 +16,8 @@ Implement deterministic parsing rules for `Specifies` metadata in front matter.
 
 ## Target Format
 
-- Require each target to match `file-name.md#heading-slug`.
-- Require file names to reference markdown files in `specs/`.
+- Require each target to match `relative/path/to/file.md#heading-slug`.
+- Require file paths to be relative to `specs/` and reference markdown files in the corpus.
 - Require heading slugs to be non-empty.
 
 ## Normalisation

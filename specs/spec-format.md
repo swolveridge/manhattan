@@ -10,7 +10,8 @@ This document defines the canonical spec format for this repository. It is the o
 
 - All managed specs live in the `specs/` directory.
 - Spec files must use the `.md` extension.
-- Subdirectories under `specs/` are not allowed.
+- Subdirectories under `specs/` are allowed for human organisation.
+- Directory structure under `specs/` has no semantic meaning.
 
 ## Front Matter
 
@@ -30,7 +31,7 @@ Each spec file must start with YAML front matter containing:
 `Specifies` format:
 
 - `Specifies` is a YAML list of one or more section targets.
-- Each target must be `file-name.md#heading-slug`.
+- Each target must be `relative/path/to/file.md#heading-slug`, relative to `specs/`.
 - Multiple targets are allowed for cross-cutting specs.
 - If a spec has no parent (for example, a root architecture spec), `Specifies` may be omitted.
 
