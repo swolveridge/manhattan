@@ -42,3 +42,4 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 ## Parser Interface
 
 - Expose parser behaviour as a library API for reuse by linter, reconciler, and traceability components.
+- Also expose a CLI for checking that a spec directory can be successfully parsed.
