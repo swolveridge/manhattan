@@ -606,7 +606,10 @@ fn parse_root(
         diagnostics.push(Diagnostic {
             severity: DiagnosticSeverity::Error,
             code: DiagnosticCode::InvalidRoot,
-            message: format!("Use Root: true only on Kind: feature specs in '{}'.", file_name),
+            message: format!(
+                "Use Root: true only on Kind: feature specs in '{}'.",
+                file_name
+            ),
             location: Some(SourceLocation {
                 file_name: file_name.to_string(),
                 line: Some(1),
@@ -1050,7 +1053,12 @@ mod tests {
                 .iter()
                 .any(|s| s.file_name == "spec-parser/spec-parsing.md")
         );
-        assert!(result.specs.iter().any(|s| s.file_name == "architecture.md" && s.is_root));
+        assert!(
+            result
+                .specs
+                .iter()
+                .any(|s| s.file_name == "architecture.md" && s.is_root)
+        );
     }
 
     #[test]
