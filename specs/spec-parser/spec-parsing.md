@@ -25,6 +25,7 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 - Build graph nodes for each spec file and addressable heading section.
 - Build graph edges from `Specifies` targets.
 - Detect cycles and report the exact cycle path.
+- Produce parser diagnostics for graph and link integrity, for downstream linter consumption.
 
 ## Reference Resolution
 
@@ -37,8 +38,7 @@ Build a parser that reads spec files and constructs a navigable spec graph for d
 - Report malformed front matter.
 - Report invalid `Kind` values.
 - Report malformed `Specifies` entries.
-- Report invalid `Root` values and invalid `Root` placement on non-`feature` specs.
-- Report when more than one spec declares `Root: true`.
+- Report malformed `Root` values.
 - Continue parsing after recoverable errors and return all discovered issues in one pass.
 
 ## Parser Interface
