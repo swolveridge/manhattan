@@ -136,6 +136,13 @@ graph data structure, detect cycles with a standard algorithm.
 
 ---
 
+# Stage 2 precursor: LLM Invoker
+
+We consistently see that Stage 2 doesn't actually generate the necessary code for invoking an LLM.
+We clearly need to defined this component first, or at least more clearly - "Use LLM-assisted analysis" isn't cutting it at all, which is not entirely surprising tbh.
+
+---
+
 ## Stage 2: Spec Linter
 
 **What we're doing:** Building the consistency checker. This is Phase 1's workhorse — the tool that finds problems in specs before any code is written.

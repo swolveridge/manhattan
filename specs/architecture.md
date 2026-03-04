@@ -10,7 +10,7 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 ## Implementation Language
 
 - Implement all first-party tools and libraries in Rust.
-- Use Rust as the default language for parser, linter, prompt generator, test deriver, reconciler, and traceability components.
+- Use Rust as the default language for parser, linter, LLM invoker, prompt generator, test deriver, reconciler, and traceability components.
 - Introduce non-Rust implementation languages only when an explicit constraint spec permits an exception.
 - Apply Rust coding and tooling conventions defined in `rust-standards.md`.
 
@@ -61,6 +61,14 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 
 - Traceability maps specs to code and code to specs as a many-to-many relationship.
 - Traceability is derivable on demand and may be cached as a non-authoritative optimization.
+
+## Required Supporting Components
+
+### LLM Invoker
+
+- The LLM invoker provides a shared OpenAI-compatible client for all LLM-backed workflows.
+- The invoker encapsulates provider transport concerns, response validation, and tool-call session handling.
+- Linter, prompt generation, and reconciliation flows consume this component rather than duplicating invocation logic.
 
 ## `.specignore` Boundary
 
