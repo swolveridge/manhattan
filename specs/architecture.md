@@ -30,6 +30,8 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 
 ## Core Components
 
+Each component should be a separate rust module.
+
 ### Spec Parser and DAG Builder
 
 - The parser reads markdown specs and builds a directed acyclic graph from `Specifies:` links.
