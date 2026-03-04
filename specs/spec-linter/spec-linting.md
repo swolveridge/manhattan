@@ -2,6 +2,7 @@
 Kind: feature
 Specifies:
   - architecture.md#spec-linter
+  - llm/invoker-api.md#invocation-method
 ---
 
 # Spec Linting
@@ -18,17 +19,20 @@ Analyze a spec corpus and report structural, semantic, and completeness issues.
 ## Contradiction Detection
 
 - Detect contradictions between related specs.
+- Run contradiction detection through the shared `llm` module defined by `llm/invoker-api.md`.
 - Distinguish contradiction from valid refinement.
 - Report evidence from both conflicting specs.
 
 ## Gap Detection
 
 - Detect referenced but unspecified concepts.
+- Run gap detection through the shared `llm` module defined by `llm/invoker-api.md`.
 - Detect missing error-handling and interface coverage where expected.
 
 ## Ambiguity Detection
 
 - Detect vague, multi-interpretable, or undefined terms.
+- Run ambiguity detection through the shared `llm` module defined by `llm/invoker-api.md`.
 - Report ambiguity findings with confidence and rationale.
 
 ## Output

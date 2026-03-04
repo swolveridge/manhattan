@@ -11,7 +11,7 @@ Define command-line behavior for linting.
 ## Commands
 
 - Implement `<main-exe> lint check [directory]`.
-- Support `--structural-only` to skip semantic checks.
+- Support `--structural-only` to skip semantic checks that require the shared `llm` module defined by `llm/invoker-api.md`.
 - Support `--focus path/to/spec.md` to limit scope to one spec and direct relationships.
 - Support `--json` for machine-readable output.
 
