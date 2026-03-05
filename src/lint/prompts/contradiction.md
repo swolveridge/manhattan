@@ -24,7 +24,6 @@ Output contract (JSON only):
 {
   "findings": [
     {
-      "is_contradiction": true | false,
       "confidence": "high" | "medium" | "low",
       "file_a": "relative/path.md",
       "file_b": "relative/path.md",

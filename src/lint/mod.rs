@@ -27,9 +27,8 @@ const CONTRADICTION_SCHEMA: &str = r#"{
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["is_contradiction", "confidence", "file_a", "file_b", "message", "evidence_a", "evidence_b"],
+        "required": ["confidence", "file_a", "file_b", "message", "evidence_a", "evidence_b"],
         "properties": {
-          "is_contradiction": {"type": "boolean"},
           "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
           "file_a": {"type": "string"},
           "file_b": {"type": "string"},
@@ -52,9 +51,8 @@ const GAP_SCHEMA: &str = r#"{
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["has_gap", "confidence", "message", "location_file", "evidence"],
+        "required": ["confidence", "message", "location_file", "evidence"],
         "properties": {
-          "has_gap": {"type": "boolean"},
           "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
           "message": {"type": "string"},
           "location_file": {"type": "string"},
@@ -203,7 +201,6 @@ struct ContradictionPayload {
 
 #[derive(Debug, Deserialize)]
 struct ContradictionFinding {
-    is_contradiction: bool,
     confidence: Confidence,
     file_a: String,
     file_b: String,
@@ -219,7 +216,6 @@ struct GapPayload {
 
 #[derive(Debug, Deserialize)]
 struct GapFinding {
-    has_gap: bool,
     confidence: Confidence,
     message: String,
     location_file: String,
@@ -608,9 +604,6 @@ where
 
     let mut issues = Vec::new();
     for finding in payload.findings {
-        if !finding.is_contradiction {
-            continue;
-        }
         issues.push(LintIssue {
             severity: LintSeverity::Error,
             category: LintCategory::Contradiction,
@@ -653,9 +646,6 @@ where
 
     let mut issues = Vec::new();
     for finding in payload.findings {
-        if !finding.has_gap {
-            continue;
-        }
         let location = if finding.location_file.is_empty() {
             None
         } else {
@@ -777,7 +767,7 @@ where
         tools: None,
         tool_choice: None,
         temperature: Some(0.0),
-        max_tokens: Some(5_000),
+        max_tokens: Some(20_000),
         reasoning_effort: Some("medium".to_string()),
     };
 
@@ -945,7 +935,6 @@ mod tests {
                 {
                     json!({
                         "findings": [{
-                            "is_contradiction": true,
                             "confidence": "high",
                             "file_a": "auth-required.md",
                             "file_b": "auth-not-required.md",

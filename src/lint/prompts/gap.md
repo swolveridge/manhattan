@@ -23,7 +23,6 @@ Output contract (JSON only):
 {
   "findings": [
     {
-      "has_gap": true | false,
       "confidence": "high" | "medium" | "low",
       "message": "short explanation",
       "location_file": "relative/path.md",
