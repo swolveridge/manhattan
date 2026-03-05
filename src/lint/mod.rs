@@ -75,9 +75,8 @@ const AMBIGUITY_SCHEMA: &str = r#"{
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["is_ambiguous", "confidence", "location_file", "message", "evidence"],
+        "required": ["confidence", "location_file", "message", "evidence"],
         "properties": {
-          "is_ambiguous": {"type": "boolean"},
           "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
           "location_file": {"type": "string"},
           "message": {"type": "string"},
@@ -234,7 +233,6 @@ struct AmbiguityPayload {
 
 #[derive(Debug, Deserialize)]
 struct AmbiguityFinding {
-    is_ambiguous: bool,
     confidence: Confidence,
     location_file: String,
     message: String,
@@ -709,9 +707,6 @@ where
 
     let mut issues = Vec::new();
     for finding in payload.findings {
-        if !finding.is_ambiguous {
-            continue;
-        }
         let location = if finding.location_file.is_empty() {
             None
         } else {
@@ -968,7 +963,6 @@ mod tests {
             {
                 json!({
                     "findings": [{
-                        "is_ambiguous": true,
                         "confidence": "high",
                         "location_file": "ambiguous.md",
                         "message": "\"quickly\" is vague.",

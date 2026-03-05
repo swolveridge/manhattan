@@ -23,7 +23,6 @@ Output contract (JSON only):
 {
   "findings": [
     {
-      "is_ambiguous": true | false,
       "confidence": "high" | "medium" | "low",
       "location_file": "relative/path.md",
       "message": "short explanation",
