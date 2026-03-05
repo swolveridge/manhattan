@@ -27,4 +27,3 @@ Implement deterministic lint policy checks over the parsed spec corpus and DAG.
 ## Scope
 
 - Run checks over all managed specs in the target directory by default.
-- Support focused checking of one spec and its direct relationships.

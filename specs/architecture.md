@@ -20,7 +20,7 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 
 - The system analyzes spec consistency before code changes.
 - The system identifies contradictions, ambiguity, gaps, and stale statements.
-- The system updates or requests updates to maintain an internally consistent spec corpus.
+- The system requests updates to maintain an internally consistent spec corpus.
 
 ### Phase 2: Code Reconciliation
 
@@ -47,6 +47,7 @@ Each component must be a separate Rust module.
 
 - The prompt generator builds task-specific prompts from templates and context.
 - Prompt generation follows `prompt-standards.md`.
+- Prompt generator behavior and interface are defined in `prompt-generator/prompt-generation.md`.
 
 ### Test Deriver
 
@@ -58,12 +59,14 @@ Each component must be a separate Rust module.
 
 - The reconciler proposes and applies code changes to satisfy target specs.
 - The reconciler runs verification loops with test derivation and execution.
+- Reconciler execution behavior is defined in `reconciler/reconciliation-execution.md`.
 - The reconciler reports findings defined in `reconciler/reconciliation-reporting.md`.
 
 ### Traceability
 
 - Traceability maps specs to code and code to specs as a many-to-many relationship.
 - Traceability is derivable on demand and may be cached as a non-authoritative optimization.
+- Traceability behavior and interfaces are defined in `traceability/traceability-mapping.md`.
 
 ## Required Supporting Components
 

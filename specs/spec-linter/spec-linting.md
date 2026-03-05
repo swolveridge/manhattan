@@ -20,6 +20,7 @@ Analyze a spec corpus and report structural, semantic, and completeness issues.
 
 - Detect contradictions across the full in-scope spec corpus.
 - Run contradiction detection through the shared `llm` module defined by `llm/invoker-api.md`.
+- Treat a mandatory requirement as any statement using imperative or normative requirement language (`must`, `must not`, `required`, `shall`) in the in-scope corpus.
 - Classify as valid refinement when one statement narrows scope, adds constraints, or specializes behavior without negating any mandatory requirement from another in-scope statement.
 - Classify as contradiction when two in-scope statements impose incompatible mandatory requirements for overlapping scope.
 - Report evidence from both conflicting specs.

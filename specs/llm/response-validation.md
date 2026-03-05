@@ -12,8 +12,8 @@ Define response parsing and validation rules for robust invocation.
 
 - Parse successful responses as JSON objects before domain mapping.
 - Require at least one response choice.
-- For continuation steps, accept assistant responses that include one or more `tool_calls` (content may also be present).
-- For terminal steps, accept assistant responses only when `tool_calls` are absent and `content` is non-empty.
+- Treat responses with one or more `tool_calls` as continuation responses (content may also be present).
+- Treat responses with no `tool_calls` as terminal responses, and require terminal `content` to be non-empty.
 
 ## Error Payload Detection
 

@@ -26,7 +26,7 @@ This spec records why the system is built in stages and why each stage is ordere
 ## Self-Bootstrapping Position
 
 - The system is expected to eventually manage its own codebase.
-- Full self-management is deferred until parser, linter, test derivation, and reconciliation are proven through repeated cycles.
+- Full self-management is deferred until parser, linter, test derivation, and reconciliation each pass at least three consecutive reconciliation cycles without unresolved errors.
 - Manual review remains required during early self-reconciliation.
 
 ## Alternatives Considered

@@ -18,9 +18,15 @@ Define deterministic orchestration for assistant tool-call workflows.
 
 ## Safety and Cost Controls
 
-- Enforce a configurable maximum tool-call count per session.
+- Enforce a configurable maximum tool-call count per session, with default `8` and allowed range `1..64`.
 - Fail the session when the tool-call budget is exceeded.
 - Fail when terminal responses are empty (`tool_calls` absent and trimmed `content` length equals `0`).
+
+## Tool Execution Interface
+
+- Register tools by name before starting a session.
+- Use a tool execution interface that accepts `(name, arguments)` and returns either output text or a tool execution error.
+- When a tool execution error occurs, append a `tool` message containing the failure details and continue the session.
 
 ## Observability
 

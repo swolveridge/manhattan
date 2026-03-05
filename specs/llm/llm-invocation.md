@@ -43,7 +43,7 @@ Provide a reusable client layer for LLM-backed components that call OpenAI-compa
 - Reject non-success HTTP responses as invocation errors.
 - Reject malformed or truncated JSON responses as invocation errors.
 - Reject error payloads encoded in otherwise-success responses.
-- Reject responses with no actionable output (no content and no tool calls).
+- Reject responses with no actionable output, using the emptiness rules in `llm/response-validation.md`.
 
 ## Reuse Contract
 

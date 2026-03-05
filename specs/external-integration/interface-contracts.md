@@ -22,8 +22,7 @@ Define contract requirements for integration points outside managed in-scope cod
 - Contracts must define:
   - operations or endpoints used;
   - required inputs and expected outputs;
-  - error behavior and retry or failure expectations;
-  - versioning or compatibility assumptions when relevant.
+  - error behavior and retry or failure expectations.
 
 ## Gap Detection Expectation
 

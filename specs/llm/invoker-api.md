@@ -37,11 +37,10 @@ Define the shared Rust API for OpenAI-compatible LLM invocation.
 
 ## Error Contract
 
-- Return typed invocation errors for transport, HTTP, parse, and provider-declared failures.
+- Return typed invocation errors for transport, HTTP, parse, provider-declared, and validation failures.
 - Define invocation error types and required metadata in `llm/invocation-errors.md`.
 - Include, at minimum, `provider`, `model`, `request_id` (when available), `http_status` (when available), `error_code`, and `raw_excerpt` (when available) so callers can log and classify failures.
 
 ## Compatibility
 
-- Keep DTO fields stable for downstream callers.
-- Permit additive, backward-compatible extension for new compatible API fields.
+- This spec defines no compatibility requirements for invoker API evolution.

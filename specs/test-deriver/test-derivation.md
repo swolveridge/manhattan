@@ -18,6 +18,7 @@ Define how tests are derived from specs without depending on implementation inte
 
 - Produce executable tests that assert required behavior from the input specs.
 - Emit traceability metadata linking each generated test to one or more source spec statements.
+- Expose output interfaces defined in `test-deriver/test-deriver-api.md`.
 
 ## Isolation Rules
 
@@ -26,5 +27,6 @@ Define how tests are derived from specs without depending on implementation inte
 
 ## Quality Rules
 
-- Prefer deterministic assertions over heuristic checks.
+- Use deterministic assertions by default.
+- Use heuristic checks only when no deterministic oracle exists for the requirement.
 - Include negative-path tests when error behavior is specified.

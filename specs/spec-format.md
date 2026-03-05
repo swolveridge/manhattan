@@ -78,7 +78,7 @@ The system invalidates a password reset token 30 minutes after issuance.
 
 ## Spec vs Code Boundary
 
-- Put decisions in specs when a reviewer could reasonably disagree with alternatives.
+- Put decisions in specs when they affect externally observable behavior, declared interfaces, safety constraints, or policy constraints.
 - Put mechanics in code when behaviour is a direct consequence of accepted decisions.
 - Include interfaces and externally observable behaviour in specs.
 - Exclude incidental implementation details unless they are constraints.

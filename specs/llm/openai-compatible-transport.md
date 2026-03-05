@@ -16,8 +16,8 @@ Define request/transport behavior for OpenAI-compatible chat completion calls.
 
 ## Base URL and Credential Policy
 
-- Resolve API keys from explicit configuration first, then environment configuration.
-- Resolve base URL from explicit configuration first, then environment configuration.
+- Resolve API keys from explicit configuration first, then environment variable `OPENAI_API_KEY`.
+- Resolve base URL from explicit configuration first, then environment variable `OPENAI_BASE_URL`, then default to `https://openrouter.ai/api/v1`.
 - Fail fast when no API key is available.
 
 ## Request Serialization

@@ -16,7 +16,6 @@ Define command-line behavior for linting.
 - Support `--dry-run` to print semantic analysis prompts without invoking the shared `llm` module.
 - During `--dry-run`, print exactly three prompt payloads: contradiction detection, gap detection, and ambiguity detection.
 - For each prompt payload, print prompt template identifier and resolved in-scope context references.
-- Support `--focus path/to/spec.md` to limit scope to one spec and direct relationships.
 - Support `--json` for machine-readable output.
 
 ## Output
@@ -27,7 +26,7 @@ Define command-line behavior for linting.
 ## Diagnostics Contract
 
 - Print each issue with severity, code, message, and file location when available.
-- Keep issue codes stable across patch versions.
+- Keep issue codes stable across patch versions, using the code set defined in `spec-linter/issue-codes.md`.
 - Sort issues by file path, then line number when present.
 
 ## Structural Pass Behavior

@@ -6,6 +6,8 @@ Kind: constraint
 
 Define required quality standards for managed specs in this repository.
 
+Specs are written in British English.
+
 ## Core Quality Requirements
 
 - Specs must not contain contradictions, as defined by [spec-linter/contradiction-detection.md](spec-linter/contradiction-detection.md).

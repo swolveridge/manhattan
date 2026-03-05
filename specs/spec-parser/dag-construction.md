@@ -11,7 +11,7 @@ Construct and validate the directed acyclic graph derived from spec metadata.
 ## Node Model
 
 - Create a file-level node for every parsed spec file.
-- Create section-level nodes for headings that can be referenced by `#heading-slug`.
+- Create section-level nodes for every markdown heading in every parsed spec file.
 - Link section nodes to their containing file node for traversal and diagnostics.
 
 ## Edge Model

@@ -12,7 +12,7 @@ Use the shared `llm` module contract defined by `llm/invoker-api.md` for all LLM
 
 ## Analysis Scope
 
-- Analyze the full in-scope spec corpus in a single pass.
+- Analyze the full in-scope spec corpus in one LLM invocation per lint run.
 - Report ambiguity wherever it appears in the corpus.
 
 ## Required Findings

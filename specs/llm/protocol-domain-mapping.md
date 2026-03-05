@@ -35,5 +35,5 @@ Define mapping rules between provider protocol DTOs and component-facing domain 
 
 ## Compatibility
 
-- Keep mapping logic explicit and test-covered.
+- Implement mapping logic as direct, handwritten field mappings in code and keep it test-covered.
 - Treat protocol DTO changes and domain type changes as independent, linked only through mapping code.

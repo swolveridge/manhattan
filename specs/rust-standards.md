@@ -8,12 +8,6 @@ Specifies:
 
 Apply these standards to all Rust code in this repository.
 
-## Toolchain and Editions
-
-- Use stable Rust toolchains.
-- Set edition to the current stable edition supported by the project toolchain.
-- Pin toolchain versions in repository-managed tooling when reproducibility is required.
-
 ## Core Tooling
 
 - Run `cargo fmt` and keep formatting clean.
@@ -27,7 +21,8 @@ Apply these standards to all Rust code in this repository.
 - Use `thiserror` for typed library error definitions.
 - Use `serde` with `serde_yaml` for front matter parsing and `serde_json` for JSON output surfaces.
 - Use `pulldown-cmark` for markdown parsing and heading extraction.
-- Use `regex` only where structural parsing cannot be expressed more safely with dedicated parsers.
+- Use `regex` only for flat lexical pattern matching.
+- Use dedicated parsers for structured or nested formats (for example markdown, JSON, YAML, or syntax trees).
 - Use `clap` for CLI interfaces.
 - Use `tokio` as the default async runtime where asynchronous execution is required.
 - Use `tracing` and `tracing-subscriber` for structured logs.
