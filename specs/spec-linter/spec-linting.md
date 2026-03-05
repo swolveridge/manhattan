@@ -13,14 +13,15 @@ Analyze a spec corpus and report structural, semantic, and completeness issues.
 
 - Run deterministic checks that do not require LLM calls.
 - Consume the parsed spec corpus and DAG produced by the parser.
-- Treat parser-reported graph-integrity issues as structural lint findings.
+- Treat graph diagnostics defined by `spec-parser/dag-construction.md` as structural lint findings.
 - Report structural findings with stable codes and source locations.
 
 ## Contradiction Detection
 
 - Detect contradictions across the full in-scope spec corpus.
 - Run contradiction detection through the shared `llm` module defined by `llm/invoker-api.md`.
-- Distinguish contradiction from valid refinement.
+- Classify as valid refinement when one statement narrows scope, adds constraints, or specializes behavior without negating any mandatory requirement from another in-scope statement.
+- Classify as contradiction when two in-scope statements impose incompatible mandatory requirements for overlapping scope.
 - Report evidence from both conflicting specs.
 
 ## Gap Detection

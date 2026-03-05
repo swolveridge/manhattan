@@ -17,7 +17,6 @@ Define a reusable library interface for spec parsing and graph construction.
 ## Input Contract
 
 - Accept the path to the repository `specs/` directory.
-- Allow caller-provided options for strict mode and warning handling.
 
 ## Output Contract
 
@@ -35,5 +34,4 @@ Define a reusable library interface for spec parsing and graph construction.
 
 ## Compatibility Contract
 
-- Keep output stable enough for linter and reconciler integration.
-- Version breaking API changes explicitly.
+- This spec defines no compatibility requirements for parser API evolution.

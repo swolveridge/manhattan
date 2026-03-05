@@ -14,4 +14,4 @@ Use the shared `llm` module contract defined by `llm/invoker-api.md` for all LLM
 
 - Referenced concepts without defining specs.
 - Missing error-case behavior for interfaces and features.
-- External integration references lacking interface specs.
+- External integration references lacking contracts defined by `external-integration/interface-contracts.md`.

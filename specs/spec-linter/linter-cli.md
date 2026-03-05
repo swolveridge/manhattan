@@ -14,6 +14,8 @@ Define command-line behavior for linting.
 - Default `[directory]` to `specs/` when omitted.
 - Support `--structural-only` to skip semantic checks that require the shared `llm` module defined by `llm/invoker-api.md`.
 - Support `--dry-run` to print semantic analysis prompts without invoking the shared `llm` module.
+- During `--dry-run`, print exactly three prompt payloads: contradiction detection, gap detection, and ambiguity detection.
+- For each prompt payload, print prompt template identifier and resolved in-scope context references.
 - Support `--focus path/to/spec.md` to limit scope to one spec and direct relationships.
 - Support `--json` for machine-readable output.
 

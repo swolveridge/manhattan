@@ -15,7 +15,10 @@ These standards constrain all prompts produced by this system.
 
 - Prompts list non-negotiable constraints as concrete rules.
 - Constraints cover safety, scope limits, and forbidden behaviors.
-- Constraints are specific enough to be testable by review.
+- Constraints are testable by review using this checklist:
+  - each constraint uses observable language (`must`, `must not`, `exactly`, `at least`);
+  - each constraint references a concrete artifact or field when applicable (file path, section, output key);
+  - each constraint avoids undefined qualifiers (for example `reasonable`, `sufficient`, `appropriate`) unless separately defined.
 
 ## Output Contract
 

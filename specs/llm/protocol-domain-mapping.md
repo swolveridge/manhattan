@@ -28,7 +28,9 @@ Define mapping rules between provider protocol DTOs and component-facing domain 
 
 ## Normalization
 
-- Normalize tool-call argument payloads into a single domain representation regardless of whether provider payload is an object or a JSON-encoded string.
+- Normalize tool-call argument payloads into a domain JSON object representation.
+- When provider payload is a JSON-encoded string, parse it and require the parsed value to be a JSON object.
+- When provider payload is already an object, preserve it as the domain JSON object representation.
 - Validate normalization failures as invocation errors with enough context for diagnostics.
 
 ## Compatibility

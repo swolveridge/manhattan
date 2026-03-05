@@ -28,7 +28,8 @@ Provide a reusable client layer for LLM-backed components that call OpenAI-compa
 - Expose cleaner domain-model request/response types to other components.
 - Map domain-model types to protocol DTOs at request boundary and map protocol DTOs back at response boundary.
 - Keep provider-specific fields and serialization quirks out of component-facing domain models.
-- Normalize known protocol shape variance (for example tool-call argument payloads serialized as JSON strings vs JSON objects) during mapping.
+- Normalize only tool-call argument payload variance (JSON strings vs JSON objects) during mapping.
+- Treat all other protocol shape variance as invocation errors unless another spec explicitly permits it.
 
 ## Tool-Calling Sessions
 

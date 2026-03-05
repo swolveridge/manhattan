@@ -30,7 +30,7 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 
 ## Core Components
 
-Each component should be a separate rust module.
+Each component must be a separate Rust module.
 
 ### Spec Parser and DAG Builder
 
@@ -52,12 +52,13 @@ Each component should be a separate rust module.
 
 - The test deriver independently generates executable tests from specs.
 - Test derivation is isolated from implementation details except declared interfaces.
+- Test deriver behavior and interfaces are defined in `test-deriver/test-derivation.md`.
 
 ### Reconciler
 
 - The reconciler proposes and applies code changes to satisfy target specs.
 - The reconciler runs verification loops with test derivation and execution.
-- The reconciler reports proportionality and residue findings.
+- The reconciler reports findings defined in `reconciler/reconciliation-reporting.md`.
 
 ### Traceability
 
@@ -75,8 +76,9 @@ Each component should be a separate rust module.
 ## `.specignore` Boundary
 
 - `.specignore` marks files and directories outside reconciliation control.
+- `.specignore` uses `.gitignore` pattern syntax and matching behavior.
 - Ignored code is treated as an unmanaged dependency.
-- Managed code interfaces with unmanaged code through interface specs.
+- Managed code interfaces with unmanaged code and non-code-accessible external systems through contracts defined in `external-integration/interface-contracts.md`.
 
 ## Source-of-Truth Principle
 
