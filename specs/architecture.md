@@ -18,9 +18,11 @@ The system keeps code aligned with declarative specs through a two-phase reconci
 
 ### Spec Reconciliation
 
-- The system analyzes spec consistency before code changes.
+- The system analyzes spec consistency.
 - The system identifies contradictions, ambiguity, gaps, and stale statements.
 - The system requests updates to maintain an internally consistent spec corpus.
+    - Updates will be provided by the user in "interactive" mode
+    - Updates will be provided by an LLM in "autonomous" mode
 
 ## Core Components
 
