@@ -355,6 +355,7 @@ fn parser_code_is_graph_integrity(code: DiagnosticCode) -> bool {
         DiagnosticCode::IoReadFailure
             | DiagnosticCode::InvalidFrontMatter
             | DiagnosticCode::InvalidKind
+            | DiagnosticCode::InvalidRoot
             | DiagnosticCode::InvalidSpecifies
             | DiagnosticCode::InvalidSpecifiesTarget
             | DiagnosticCode::InvalidCrossReference
