@@ -11,7 +11,7 @@ Provide a reusable client layer for LLM-backed components that call OpenAI-compa
 ## Provider Compatibility
 
 - Target OpenAI-compatible `POST /chat/completions` APIs.
-- Default base URL to `https://api.openai.com/v1`.
+- Default base URL to `https://openrouter.ai/api/v1`.
 - Allow overriding base URL for compatible providers.
 - Treat model identifiers as opaque strings and pass them through unchanged.
 

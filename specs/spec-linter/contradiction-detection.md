@@ -12,8 +12,8 @@ Use the shared `llm` module contract defined by `llm/invoker-api.md` for all LLM
 
 ## Comparison Scope
 
-- Compare sibling specs that specify the same parent section.
-- Compare child specs against their parent requirements.
+- Analyze the full in-scope spec corpus in a single pass.
+- Identify contradictions wherever they occur in the corpus, including sibling-vs-sibling and child-vs-parent conflicts.
 
 ## Reporting
 

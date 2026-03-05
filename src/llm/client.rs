@@ -8,7 +8,7 @@ use crate::llm::error::InvocationError;
 use crate::llm::protocol::{ChatRequestBody, ChatResponseBody};
 use crate::llm::types::{ChatRequest, ChatResponse};
 
-const DEFAULT_BASE_URL: &str = "https://api.openai.com/v1/";
+const DEFAULT_BASE_URL: &str = "https://openrouter.ai/api/v1/";
 
 #[derive(Debug, Clone, Default)]
 pub struct ClientConfig {
@@ -138,16 +138,22 @@ impl OpenAiCompatibleClient {
         let has_content = first_choice
             .get("message")
             .and_then(|m| m.get("content"))
-            .is_some_and(|v| !v.is_null() && !v.as_str().is_some_and(|s| s.trim().is_empty()));
+            .is_some_and(has_actionable_content);
         let has_tool_calls = first_choice
             .get("message")
             .and_then(|m| m.get("tool_calls"))
-            .is_some_and(|v| v.is_array() && !v.as_array().unwrap_or(&Vec::new()).is_empty());
+            .is_some_and(|v| v.as_array().is_some_and(|calls| !calls.is_empty()));
+
+        let content_kind = first_choice
+            .get("message")
+            .and_then(|m| m.get("content"))
+            .map(value_kind)
+            .unwrap_or("missing");
 
         if !has_content && !has_tool_calls {
-            return Err(InvocationError::InvalidResponse(
-                "assistant returned no content and no tool calls".to_string(),
-            ));
+            return Err(InvocationError::InvalidResponse(format!(
+                "assistant returned no content and no tool calls (finish_reason={finish_reason:?}, content_kind={content_kind})"
+            )));
         }
 
         let parsed = serde_json::from_value::<ChatResponseBody>(value).map_err(|err| {
@@ -155,6 +161,46 @@ impl OpenAiCompatibleClient {
         })?;
 
         ChatResponse::try_from(parsed)
+    }
+}
+
+fn has_actionable_content(value: &Value) -> bool {
+    match value {
+        Value::Null => false,
+        Value::String(text) => !text.trim().is_empty(),
+        Value::Array(parts) => parts.iter().any(has_actionable_content_part),
+        Value::Object(map) => {
+            for key in ["text", "content", "refusal", "output_text"] {
+                if map
+                    .get(key)
+                    .and_then(Value::as_str)
+                    .is_some_and(|text| !text.trim().is_empty())
+                {
+                    return true;
+                }
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
+fn has_actionable_content_part(value: &Value) -> bool {
+    match value {
+        Value::String(text) => !text.trim().is_empty(),
+        Value::Object(_) => has_actionable_content(value),
+        _ => false,
+    }
+}
+
+fn value_kind(value: &Value) -> &'static str {
+    match value {
+        Value::Null => "null",
+        Value::Bool(_) => "bool",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
     }
 }
 
@@ -325,5 +371,39 @@ mod tests {
             .clone()
             .expect("tool calls");
         assert_eq!(tool_calls[0].function.arguments, json!({"q": "lint"}));
+    }
+
+    #[tokio::test]
+    async fn supports_content_array_shape() {
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/chat/completions"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "id": "chatcmpl-1",
+                "model": "openai/gpt-5",
+                "choices": [{
+                    "index": 0,
+                    "finish_reason": "stop",
+                    "message": {
+                        "role": "assistant",
+                        "content": [
+                            {"type": "text", "text": "{\"findings\":[]}"},
+                        ]
+                    }
+                }]
+            })))
+            .mount(&server)
+            .await;
+
+        let client = OpenAiCompatibleClient::new("test-key".to_string())
+            .unwrap()
+            .with_base_url(server.uri())
+            .unwrap();
+
+        let response = client.chat(request()).await.expect("success");
+        assert_eq!(
+            response.choices[0].message.content.as_deref(),
+            Some("{\"findings\":[]}")
+        );
     }
 }

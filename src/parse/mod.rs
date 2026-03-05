@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use petgraph::graph::DiGraph;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
 use thiserror::Error;
 use walkdir::WalkDir;
@@ -121,7 +121,7 @@ pub enum DiagnosticCode {
     OrphanSpec,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SourceLocation {
     pub file_name: String,
     pub line: Option<usize>,

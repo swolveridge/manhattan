@@ -100,7 +100,7 @@ impl TryFrom<ProtocolChoice> for Choice {
 pub(crate) struct ProtocolMessage {
     pub role: Role,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<String>,
+    pub content: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_call_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -111,7 +111,7 @@ impl From<Message> for ProtocolMessage {
     fn from(message: Message) -> Self {
         Self {
             role: message.role,
-            content: message.content,
+            content: message.content.map(Value::String),
             tool_call_id: message.tool_call_id,
             tool_calls: message
                 .tool_calls
@@ -136,10 +136,64 @@ impl TryFrom<ProtocolMessage> for Message {
 
         Ok(Self {
             role: message.role,
-            content: message.content,
+            content: normalize_message_content(message.content),
             tool_call_id: message.tool_call_id,
             tool_calls,
         })
+    }
+}
+
+fn normalize_message_content(content: Option<Value>) -> Option<String> {
+    let content = content?;
+
+    match content {
+        Value::Null => None,
+        Value::String(text) => {
+            if text.trim().is_empty() {
+                None
+            } else {
+                Some(text)
+            }
+        }
+        Value::Array(parts) => {
+            let mut fragments = Vec::new();
+            for part in parts {
+                if let Some(text) = extract_text_fragment(&part) {
+                    fragments.push(text);
+                }
+            }
+
+            if fragments.is_empty() {
+                None
+            } else {
+                Some(fragments.join("\n"))
+            }
+        }
+        other => extract_text_fragment(&other),
+    }
+}
+
+fn extract_text_fragment(value: &Value) -> Option<String> {
+    match value {
+        Value::Null => None,
+        Value::String(text) => {
+            if text.trim().is_empty() {
+                None
+            } else {
+                Some(text.clone())
+            }
+        }
+        Value::Object(map) => {
+            for key in ["text", "content", "refusal", "output_text"] {
+                if let Some(text) = map.get(key).and_then(Value::as_str)
+                    && !text.trim().is_empty()
+                {
+                    return Some(text.to_string());
+                }
+            }
+            None
+        }
+        _ => None,
     }
 }
 
@@ -297,5 +351,21 @@ mod tests {
 
         let mapped = ToolCall::try_from(call).expect("maps");
         assert_eq!(mapped.function.arguments, json!({"q": "rust"}));
+    }
+
+    #[test]
+    fn normalize_message_content_from_parts_array() {
+        let message = ProtocolMessage {
+            role: Role::Assistant,
+            content: Some(json!([
+                {"type":"text","text":"hello"},
+                {"type":"output_text","text":"world"}
+            ])),
+            tool_call_id: None,
+            tool_calls: None,
+        };
+
+        let mapped = Message::try_from(message).expect("maps");
+        assert_eq!(mapped.content.as_deref(), Some("hello\nworld"));
     }
 }

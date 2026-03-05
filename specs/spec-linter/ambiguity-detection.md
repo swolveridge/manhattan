@@ -10,6 +10,11 @@ Specifies:
 Use LLM-assisted analysis to find unclear requirements.
 Use the shared `llm` module contract defined by `llm/invoker-api.md` for all LLM calls.
 
+## Analysis Scope
+
+- Analyze the full in-scope spec corpus in a single pass.
+- Report ambiguity wherever it appears in the corpus.
+
 ## Required Findings
 
 - Ambiguous statements with multiple plausible interpretations.
