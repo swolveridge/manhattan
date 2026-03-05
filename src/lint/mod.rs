@@ -767,7 +767,7 @@ where
         tools: None,
         tool_choice: None,
         temperature: Some(0.0),
-        max_tokens: Some(20_000),
+        max_tokens: Some(100_000),
         reasoning_effort: Some("medium".to_string()),
     };
 
