@@ -6,19 +6,39 @@ Specifies:
 
 # Prompt Generation
 
-Define the prompt generator component used by linter and reconciliation workflows.
+Define the prompt generator component used by linter, test derivation, and reconciliation workflows.
 
-## Inputs
+## Scope
 
-- Accept a prompt template identifier.
-- Accept structured context payloads (spec corpus excerpts, file paths, constraints, and task parameters).
+- Build task-specific prompts from templates plus assembled spec corpus context.
+- Keep prompt construction deterministic for identical inputs.
+- Keep prompt rendering separate from LLM transport and invocation concerns.
+- Keep implementation simple: read spec files from one directory without link-following or graph traversal.
 
-## Output
+## Template Filling
 
-- Return one rendered prompt string per invocation.
-- Rendered prompts must conform to `prompt-standards.md`.
+- Resolve declared template placeholders from provided input values.
+- Fail when required placeholders are missing or unresolved.
+- Reject unknown placeholder variables.
 
-## Behavior
+## Context Assembly
 
-- Resolve template placeholders from provided context values.
-- Fail with a typed error when required placeholders are missing.
+- Accept a single directory of specs as input context.
+- Read markdown spec files in that directory recursively.
+- Assemble context directly from file contents.
+- Do not follow `Specifies:` links or markdown cross-references.
+- Preserve explicit context block delimiters required by `prompt-standards.md`.
+
+## Prompt Generator Interface
+
+- Expose a reusable library API for context assembly, validation, and render.
+- Accept template identifier and spec directory.
+- Return one rendered prompt string.
+- Ensure rendered prompt structure conforms to `prompt-standards.md`.
+- Keep context block ordering deterministic.
+
+### Error Behaviour
+
+- Return typed errors for template resolution failures.
+- Return typed errors for invalid template identifiers and unreadable spec directories.
+- Return all validation failures discoverable in one pass before rendering output.
