@@ -6,7 +6,7 @@ Specifies:
 
 # Context Assembly
 
-Define how prompt context is selected, ordered, bounded, and labelled.
+Define how prompt context is selected, ordered, and labelled.
 
 ## Input Scope
 
